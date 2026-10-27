@@ -57,7 +57,8 @@
     shipping:          ['Shipping', 'Zones, rates and delivery options'],
     currency:          ['Currencies', 'Multi-currency pricing and exchange rates'],
     staff:             ['Staff & Roles', 'Team access and permissions'],
-    settings:          ['Settings', 'Store configuration and preferences']
+    settings:          ['Settings', 'Store configuration and preferences'],
+    account:           ['Account settings', 'Your profile, sign-in and preferences']
   };
 
   /* ------------------------------------------------------------- render */
@@ -103,7 +104,7 @@
       }).join('') + '</nav>' +
       '<div class="side-foot">' +
         '<button class="side-user js-user">' +
-          '<span class="avatar sm">' + esc(U.Fmt.initials(S.currentUser().name)) + '</span>' +
+          '<span class="js-me-ava" style="display:contents">' + meAvatar('sm') + '</span>' +
           '<span class="side-user-meta"><span class="side-user-name">' + esc(S.currentUser().name) + '</span>' +
           '<span class="side-user-role">' + esc(S.roleName(S.currentUser().roleId)) + '</span></span>' +
           '<span class="chev" style="color:var(--side-ink)">' + ico('chevUp', { size: 15 }) + '</span>' +
@@ -138,7 +139,7 @@
         (unread ? '<span class="dot-badge">' + unread + '</span>' : '') + '</button>' +
       '<button class="icon-btn js-help" aria-label="Help">' + ico('help') + '</button>' +
       '<button class="js-avatar" aria-label="Account" style="flex:none">' +
-        '<span class="avatar">' + esc(U.Fmt.initials(S.currentUser().name)) + '</span></button>' +
+        '<span class="js-me-ava" style="display:contents">' + meAvatar('') + '</span></button>' +
     '</header>');
 
     bar.querySelector('.js-collapse').addEventListener('click', function () {
@@ -266,12 +267,28 @@
     });
   }
 
+  /* ------------------------------------------------- signed-in member */
+  function meAvatar(cls) {
+    return global.Views._avatarFor(S.currentUser(), cls);
+  }
+  /** Keep the sidebar and topbar in step when the member edits their profile. */
+  function refreshUser() {
+    var me = S.currentUser();
+    qsa('.js-me-ava').forEach(function (n) {
+      n.innerHTML = meAvatar(n.closest('.side-user') ? 'sm' : '');
+    });
+    var name = qs('.side-user-name'), role = qs('.side-user-role');
+    if (name) name.textContent = me.name;
+    if (role) role.textContent = S.roleName(me.roleId);
+  }
+
   /* ----------------------------------------------------------- menus */
   function userMenu(anchor) {
     var me = S.currentUser();
     U.menu(anchor, [
-      { label: 'My profile', icon: 'user', onClick: function () { location.hash = '#/staff?open=' + me.id; } },
-      { label: 'Account settings', icon: 'settings', onClick: function () { location.hash = '#/settings'; } },
+      { label: 'My profile', icon: 'user', onClick: function () { location.hash = '#/account?section=profile'; } },
+      { label: 'Account settings', icon: 'settings', onClick: function () { location.hash = '#/account?section=security'; } },
+      { label: 'Store settings', icon: 'store', onClick: function () { location.hash = '#/settings'; } },
       { label: 'Activity log', icon: 'activity', onClick: function () { location.hash = '#/staff?tab=activity'; } },
       { sep: true },
       { label: 'Keyboard shortcuts', icon: 'help', trailing: 'Ctrl /', onClick: helpDialog },
@@ -340,6 +357,7 @@
       ['G then P', 'Go to Products'],
       ['G then O', 'Go to Orders'],
       ['G then C', 'Go to Customers'],
+      ['G then S', 'Go to Settings'],
       ['N', 'New record on the current tab']
     ];
     U.modal({
@@ -376,7 +394,7 @@
 
   /* ----------------------------------------------------------- routing */
   function parseHash() {
-    var raw = (location.hash || '#/dashboard').replace(/^#\/?/, '');
+    var raw = (location.hash || '#/' + (S.pref('home') || 'dashboard')).replace(/^#\/?/, '');
     var parts = raw.split('?');
     var q = {};
     (parts[1] || '').split('&').filter(Boolean).forEach(function (p) {
@@ -474,6 +492,7 @@
     render();
     window.addEventListener('hashchange', render);
     S.on('*', function () { refreshBadges(); });
+    S.on('staff', refreshUser);
     refreshBadges();
   }
 

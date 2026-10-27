@@ -704,7 +704,8 @@
         customRequestAck: true, clinicReminder: true, newsletterDigest: false,
         adminNewOrder: true, adminLowStock: true, adminNewRequest: true
       },
-      features: { reviews: true, wishlist: true, customWig: true, clinic: true, quotes: true, multiCurrency: true, liveChat: true }
+      features: { reviews: true, wishlist: true, customWig: true, clinic: true, quotes: true, multiCurrency: true, liveChat: true },
+      security: { require2FA: false, sessionTimeout: 480, minPasswordLength: 8, lockoutAttempts: 5, loginAlerts: true }
     };
 
     return {
